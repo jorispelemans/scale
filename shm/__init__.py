@@ -1,3 +1,1 @@
-import generate
-import select
-import score
+from generator import Generator

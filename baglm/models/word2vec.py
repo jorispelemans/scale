@@ -1,18 +1,14 @@
-#!/usr/bin/env python
-
 from languagemodel import LanguageModel
-from gensim import corpora, models, similarities, matutils
+from gensim import corpora, models, matutils
 from gensim.models import word2vec
 from numpy import array, dot, float32 as REAL
-import sys
-import math
-from scipy.stats import mstats
+from collections import deque
 
 class Word2Vec(LanguageModel):
 
 	def __init__(self, file, window=175, gamma=11, weights=None):
 		LanguageModel.__init__(self,file)
-		self.window_size = window
+		self.history = deque(maxlen=window)
 		self.gamma = gamma
 		self.weights = weights
 		self._readLM()
@@ -34,47 +30,39 @@ class Word2Vec(LanguageModel):
 				return val
 
 		def getWeights(self, history):
-			return dict([(self.dic[id],self._cut(val)) for id, val in self.tfidf[self.dic.doc2bow(history.split())]])
+			return dict([(self.dic[id],self._cut(val)) for id, val in self.tfidf[self.dic.doc2bow(history)]])
 
-	def calcProbs(self,history):
+	def init_history(self, history):
+		maxlen = self.history.maxlen
+		self.history = deque(history, maxlen=maxlen)
+
+	def add_to_history(self, word):
+		self.history.append(word)
+
+	def calc_prob(self, word, history=None):
+		if history != None:
+			self.init_history(history)
+		if len(self.history) == 0:
+			return 0
 		self.model.init_sims()
 		if self.weights != None:
-			positive = self.weights.getWeights(history).iteritems()
+			positive = self.weights.getWeights(self.history).iteritems()
 		else:
-			positive = [(word, 1.0) for word in history.split()]
+			positive = [(word, 1.0) for word in self.history]
 		mean = []
 		for w, weight in positive:
 			if w in self.model.vocab:
 				mean.append(weight * matutils.unitvec(self.model.syn0[self.model.vocab[w].index]))
 		mean = matutils.unitvec(array(mean).mean(axis=0)).astype(REAL)
-		cos = dot(self.model.syn0norm, mean)
-		cos_min = min(cos)
-		cos_shifted = (cos - cos_min)**self.gamma
-		sum_cos_shifted = sum(cos_shifted)
-		return cos_shifted / sum_cos_shifted
-
-	def calcProb(self, word, history):
-		self.model.init_sims()
-		if self.weights != None:
-			positive = self.weights.getWeights(history).iteritems()
-		else:
-			#positive = [(w, 1.0) for w in history.split()]
-			positive = [(word, 1.0) for word in history.split()]
-		mean = []
-		for w, weight in positive:
-			if w in self.model.vocab:
-				mean.append(weight * matutils.unitvec(self.model.syn0[self.model.vocab[w].index]))
-		mean = matutils.unitvec(array(mean).mean(axis=0)).astype(REAL)
-#		mean = matutils.unitvec(mstats.gmean(array(mean),axis=0)).astype(REAL)
 		sims = dot(self.model.syn0norm, mean)
 		try:
 			i_word = self.model.vocab[word].index
-			prob = self.cosToProb(sims, i_word)
+			prob = self.cos_to_prob(sims, i_word)
 		except KeyError:
 			prob = 0 # ignore
 		return prob
 
-	def cosToProb(self, cos, index):
+	def cos_to_prob(self, cos, index):
 		cos_min = min(cos)
 		cos_shifted = (cos - cos_min)**self.gamma
 		sum_cos_shifted = sum(cos_shifted)
