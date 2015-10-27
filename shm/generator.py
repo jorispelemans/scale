@@ -2,11 +2,7 @@ import re
 import sys
 import commands
 from collections import defaultdict
-
-DEBUG = False
-def info(s):
-	if DEBUG:
-		sys.stderr.write(str(s) + '\n')
+import logging
 
 def isupper(w):
 	return w.isupper() and "'" not in w
@@ -28,37 +24,37 @@ class Generator():
 	def decompound(self, word):
 		return self._decompound(word)
 
-	def _decompound(self, w, orig=None, info_pre=''):
-		if orig == None:
-			orig =w
-		r = []
-		info(info_pre + 'Decompounding ' + w + ':')
-		info_pre_old = info_pre
-		info_pre = info_pre + '\t'
+	def _decompound(self, w, pos=1, history=[]):
+#		logging.debug("Decompounding {0} from position {1}: {2}".format(w, pos, w[pos-1:]))
+		res = []
 		if len(w) < self.minlen_comp:
-			info(info_pre + w + ' too short to decompound')
+			logging.debug('{0} too short to decompound'.format(w))
 		else:
-			for i in range(1,len(w)):
-				w1 = w[:i]
+			for i in range(pos,len(w)):
+				w1 = w[pos-1:i]
 				w2 = w[i:]
-				i1 = self._inflect(w1, info_pre=info_pre)
-				if (i1 != ''):
-					if (orig.endswith(w2)):
-						i2 = self._inflect(w2,'>', info_pre)
-					else:
-						i2 = self._inflect(w2, info_pre=info_pre)
+				# 1) find a candidate left constituent
+				i1 = self._inflect(w1)
+				if i1 != '':
+					logging.debug("Found left constituent at position {0} => {1}".format(i, " + ".join(history+[i1,"..."])))
+					# 2) find a candidate right constituent
+					# 2a) w2 is a valid right constituent
+					i2 = self._inflect(w2,'>')
 					if (i2 != ''):
-						r.append([i1,i2])
-					i2 = self._decompound(w2,orig,info_pre+'\t')
-					if (i2 != []):
-						r.append([i1,i2])
-		if r != []:
-			info(info_pre_old + 'Decompounding ' + w + ' succesful')
-		else:
-			info(info_pre_old + 'Decompounding ' + w + ' unsuccesful')
-		return r
+						hist = history + [i1, i2]
+						logging.debug("\tAdding candidate hypothesis: {0}".format(hist))
+						#yield history + i1 + i2
+						res.append(hist)
+					# 2b) w2 is itself a compound => recursion
+					hist = history + [i1]
+					right = self._decompound(w, i+1, hist)
+					if len(right) != 0:
+						res += right
+					else:
+						logging.debug("\tNo right constituents found, aborting hypothesis")
+		return res
 
-	def _inflect(self, word,pos='<',info_pre=''):
+	def _inflect(self, word,pos='<'):
 		w = ''
 		code = ''
 		if pos == '<':
@@ -74,7 +70,6 @@ class Generator():
 		else:
 			lex = self.lex_head
 		if word in lex:
-			info(info_pre + word + ' in lexicon')
 			w = word
 			code = 'LEX'
 		elif (pos != '>'):
