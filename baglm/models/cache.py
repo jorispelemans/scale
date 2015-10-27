@@ -1,12 +1,17 @@
-from gensim import corpora, models, similarities
+"""
+Module that calculates the probability of a word given the previous word.
+The probability calculation is based on a cache memory i.e. the number of times the word appeared before.
+"""
+
 import math
 from collections import defaultdict, deque
+import logging
 	
 class Cache():
 
-	(LIN_DECAY, EXP_DECAY, EXP_DECAY_CCS) = ('lin','exp','exp_ccs')
+	(NO_DECAY, LIN_DECAY, EXP_DECAY) = ('no', 'lin', 'exp')
 
-	def __init__(self, window=400, decay=EXP_DECAY_CCS, alpha=0.99):
+	def __init__(self, window=400, decay=EXP_DECAY, alpha=0.99):
 		self.history = deque(maxlen=window)
 		self.decay = decay
 		self.alpha = alpha
@@ -29,11 +34,12 @@ class Cache():
 			if self.decay == self.LIN_DECAY:
 				contribution = size - (1 - self.alpha) * (size - float(i)) #linear decay
 			elif self.decay == self.EXP_DECAY:
-				contribution = math.exp(-1*(1-self.alpha)*(size-i)) #clarkson & robinson
-			elif self.decay == self.EXP_DECAY_CCS:
-				contribution = math.pow(self.alpha,(size-i)) #bellegarda style = simpler and almost identical
+				contribution = math.pow(self.alpha,(size-i))
+			elif self.decay == self.NO_DECAY:
+				contribution = 1
 			else:
-				contribution = 1 # no decay = uniform cache
+				logging.error("Invalid or no decay specified.")
+				sys.exit(1)
 			self.cache[word] += contribution
 			total += contribution
 		if total != 0:

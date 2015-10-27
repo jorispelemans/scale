@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+
+"""
+USAGE: %(program)s
+	BagLM example that calculates (log)probabilities for a given corpus based on the following 3 models:
+	1) Cache language model
+	2) LSA-based language model
+	3) Word2Vec-based language model
+"""
+
 from baglm import models
 from math import log10
 
@@ -7,7 +17,6 @@ def test_cache():
 	for w in corpus.split():
 		cache.add_to_history(w)
 		print cache.cache
-
 
 # load models (TODO: use reasonable parameter values)
 

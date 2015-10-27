@@ -1,6 +1,12 @@
-import sys
-import tools
-from collections import defaultdict
+"""
+Module for the selection of the best semantic head for given compounds.
+
+Selection is based on a weighted sum of scores, corresponding to one of the following criteria:
+	* Head length
+	* Head frequency in a corpus
+	* Sum of the constituent frequencies
+"""
+
 import logging
 
 class Selector():
@@ -25,7 +31,7 @@ class Selector():
 		best = None
 		for h in hypotheses:
 			score = self.score(word, h)
-			if score > max_score:
+			if score >= max_score:
 				best, max_score = h, score
 		return best, max_score
 

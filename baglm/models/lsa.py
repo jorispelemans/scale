@@ -1,11 +1,16 @@
-from languagemodel import LanguageModel
+"""
+Module that calculates the probability of a word given the previous word.
+The probability calculation is based on Latent Semantic Analysis i.e. the distance 
+between the word and the previous words in a semantic space calculated using singular value decomposition.
+"""
+
 from gensim import corpora, models, similarities
 from collections import deque
 
-class LSA(LanguageModel):
+class LSA():
 
-	def __init__(self, file, dictfile, tfidf=None, window=175, gamma=11):
-		LanguageModel.__init__(self,file)
+	def __init__(self, f, dictfile, tfidf=None, window=175, gamma=11):
+		self.f = f
 		self.history = deque(maxlen=window)
 		self.dictfile = dictfile
 		self.gamma = gamma
@@ -16,7 +21,7 @@ class LSA(LanguageModel):
 
 	def _readLM(self):
 		self.dictionary = corpora.Dictionary.load(self.dictfile)
-		self.model = models.LsiModel.load(self.file)
+		self.model = models.LsiModel.load(self.f)
 
 	def _buildDictionaryIndex(self):
 		def dict_bow():

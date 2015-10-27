@@ -1,20 +1,27 @@
-from languagemodel import LanguageModel
+"""
+Module that calculates the probability of a word given the previous word.
+The probability calculation is based on Word2Vec i.e. the distance 
+between the word and the previous words in a semantic space calculated using the continuous skip-gram model [1].
+
+[1] Tomas Mikolov, Kai Chen, Greg Corrado, and Jeffrey Dean. Efficient Estimation of Word Representations in Vector Space. In Proceedings of Workshop at ICLR, 2013.
+"""
+
 from gensim import corpora, models, matutils
 from gensim.models import word2vec
 from numpy import array, dot, float32 as REAL
 from collections import deque
 
-class Word2Vec(LanguageModel):
+class Word2Vec():
 
-	def __init__(self, file, window=175, gamma=11, weights=None):
-		LanguageModel.__init__(self,file)
+	def __init__(self, f, window=175, gamma=11, weights=None):
+		self.f = f
 		self.history = deque(maxlen=window)
 		self.gamma = gamma
 		self.weights = weights
 		self._readLM()
 
 	def _readLM(self):
-		self.model = word2vec.Word2Vec.load_word2vec_format(self.file,binary=True)
+		self.model = word2vec.Word2Vec.load_word2vec_format(self.f,binary=True)
 
 	class TfidfWeights():
 

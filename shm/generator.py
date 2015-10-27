@@ -1,7 +1,17 @@
-import re
-import sys
-import commands
-from collections import defaultdict
+"""
+Module for the generation of decompounding hypotheses of words.
+
+Exhaustively generates all possible decompounding hypotheses that satisfy the following constraints:
+	* modifiers belong to a given modifier lexicon
+	* modifiers have a minimum given length
+	* heads belong to a given head lexicon
+	* heads have a minimum given length
+	* compounds have a given minimum length
+	* compounds are concatenations of one or more modifiers and a head with:
+		* possible prefixes from a given list
+		* possible binding morphemes from a given list
+"""
+
 import logging
 
 def isupper(w):
@@ -34,13 +44,13 @@ class Generator():
 				w1 = w[pos-1:i]
 				w2 = w[i:]
 				# 1) find a candidate left constituent
-				i1 = self._inflect(w1)
-				if i1 != '':
+				i1, _ = self._inflect(w1)
+				if i1 != None:
 					logging.debug("Found left constituent at position {0} => {1}".format(i, " + ".join(history+[i1,"..."])))
 					# 2) find a candidate right constituent
 					# 2a) w2 is a valid right constituent
-					i2 = self._inflect(w2,'>')
-					if (i2 != ''):
+					i2, _ = self._inflect(w2,'>')
+					if i2 != None:
 						hist = history + [i1, i2]
 						logging.debug("\tAdding candidate hypothesis: {0}".format(hist))
 						#yield history + i1 + i2
@@ -54,17 +64,16 @@ class Generator():
 						logging.debug("\tNo right constituents found, aborting hypothesis")
 		return res
 
-	def _inflect(self, word,pos='<'):
-		w = ''
-		code = ''
+	def _inflect(self, word, pos='<'):
+		w, code = None, None
 		if pos == '<':
 			if len(word)>=2 and (isupper(word) or (isupper(word[0:-1]) and word[-1] == '-')):
 				w = word.replace('-','')
 				code = 'ACRO'
 			elif len(word) < self.minlen_mod:
-				return ''
+				return None, None
 		elif len(word) < self.minlen_head:
-			return ''
+			return None, None
 		if pos == '<':
 			lex = self.lex_mod
 		else:
@@ -77,6 +86,4 @@ class Generator():
 				if (word.endswith(r)) and word[:-len(r)] in lex:
 					w = word[:-len(r)]
 					code = 'INFL:' + r
-		if w != '':
-			return '%s (%s)' % (w,code)
-		return ''
+		return w, code
