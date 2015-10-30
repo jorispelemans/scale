@@ -118,7 +118,7 @@ if __name__ == '__main__':
 	# calculate probabilities
 	for i, line in enumerate(open(f_test_corpus, 'r')):
 		print "{0}) {1}".format(i+1, line.strip())
-		for word in line.split(' '):
+		for word in line.strip().split(' '):
 			prob = 0
 			for lm, weight in lms:
 				prob += weight * lm.calc_prob(word)
