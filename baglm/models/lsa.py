@@ -4,8 +4,8 @@ The probability calculation is based on Latent Semantic Analysis i.e. the distan
 between the word and the previous words in a semantic space calculated using singular value decomposition.
 """
 
-from gensim import corpora, models, similarities
 from collections import deque
+from gensim import corpora, models, similarities
 
 class LSA():
 

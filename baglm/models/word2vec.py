@@ -6,10 +6,10 @@ between the word and the previous words in a semantic space calculated using the
 [1] Tomas Mikolov, Kai Chen, Greg Corrado, and Jeffrey Dean. Efficient Estimation of Word Representations in Vector Space. In Proceedings of Workshop at ICLR, 2013.
 """
 
+from collections import deque
+from numpy import array, dot, float32 as REAL
 from gensim import corpora, models, matutils
 from gensim.models import word2vec
-from numpy import array, dot, float32 as REAL
-from collections import deque
 
 class Word2Vec():
 
