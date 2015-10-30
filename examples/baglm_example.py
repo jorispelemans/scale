@@ -92,9 +92,7 @@ if __name__ == '__main__':
 	# TRAINING
 
 	# lsa model
-	if os.path.exists(f_lsa):
-		lsa = LsiModel.load(f_lsa)
-	else:
+	if not os.path.exists(f_lsa):
 		lsa = LsiModel(tfidf[bow], id2word=wiki.dictionary, num_topics=lsa_dim)
 		lsa.save(f_lsa)
 
@@ -103,19 +101,19 @@ if __name__ == '__main__':
 		def __iter__(self):
 			for d in wiki.get_texts():
 				yield [w for w in d if w in wiki.dictionary.token2id]
-	if os.path.exists(f_w2v):
-		w2v.load(f_w2v)
-	else:
+	if not os.path.exists(f_w2v):
 		w2v = Word2Vec(MyCorpus(), size=w2v_dim, min_count=1, window=5)
 		w2v.save_word2vec_format(f_w2v, binary=True)
 
-	# cache model
-	cache = models.Cache(window=50)
+	# LANGUAGE MODELS
+	lm_cache = models.Cache(window=50)
+	lm_lsa = models.LSA(f_lsa, f_dict, tfidf=f_tfidf, window=50)
+	lm_w2v = models.Word2Vec(f_w2v, window=50)
 
 	# EVALUATION
 
 	# interpolation weights
-	lms = [(cache, 0.2), (lsa, 0.4), (w2v, 0.4)]
+	lms = [(lm_cache, 0.2), (lm_lsa, 0.4), (lm_w2v, 0.4)]
 
 	# calculate probabilities
 	for i, line in enumerate(open(f_test_corpus, 'r')):
