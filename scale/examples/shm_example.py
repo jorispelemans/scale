@@ -17,7 +17,7 @@ import os
 import urllib
 import sys
 from gensim.corpora import WikiCorpus
-from shm import *
+from scale.shm import *
 
 DEFAULT_MODS_SIZE = 600000
 DEFAULT_HEADS_SIZE = 200000
@@ -83,6 +83,6 @@ if __name__ == '__main__':
 		logging.info('Selection for word {0}:'.format(w))
 		d = generated_hypotheses[w]
 		for i, h in enumerate(d):
-			logging.info('\t{0:2}) {1:40} score = {2}'.format(i, h, s.score(w, h)))
+			logging.info('\t{0:2}) {1:40} score = {2}'.format(i+1, h, s.score(w, h)))
 		best, score = s.select_best_hypothesis(w, d)
 		logging.info('\t==> Semantic head = {0}'.format(best[-1]))

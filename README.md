@@ -8,4 +8,11 @@ SCALE is a Python toolkit that contains two extensions to n-gram Language Models
 
 The toolkit is open source, includes working examples and can be found on http://github.com/jorispelemans/scale. It is still quite new, so we're actively working on providing more documentation. If you encounter any bugs, please report and we will fix them asap.
 
-Dependencies: [gensim] (https://github.com/piskvorky/gensim/) which is most efficient if you have also installed [Cython] (https://github.com/cython/cython).
+## Installation
+
+SCALE depends on [gensim] (https://github.com/piskvorky/gensim/) which is most efficient if you have also installed [Cython] (https://github.com/cython/cython).
+
+To install SCALE, run:
+```
+python setup.py install
+```

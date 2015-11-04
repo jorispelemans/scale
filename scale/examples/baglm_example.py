@@ -27,7 +27,7 @@ import urllib
 from math import log10
 from gensim.corpora import WikiCorpus, SvmLightCorpus
 from gensim.models import TfidfModel, LsiModel, Word2Vec
-from baglm import models
+from scale.baglm import models
 
 DEFAULT_VOC_SIZE = 25000
 
