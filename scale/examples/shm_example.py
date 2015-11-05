@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 """
-USAGE: shm_example.py WLIST [MODIFIER_LEXICON_SIZE] [HEAD_LEXICON_SIZE]
+USAGE: shm_example.py WLIST [MODIFIER_LEXICON_SIZE] [HEAD_LEXICON_SIZE] [CORPUS]
 
 	Semantic Head Mapping example that finds semantic heads for a given word list in 2 steps:
 	1) Generation: generate candidate decompoundings from modifier and head lexica
 	2) Selection: find best hypothesis based on a maximum head length criterion
 
-	The lexica contain the most frequent words in a Dutch wikipedia corpus (132MB @ 2015/10/14 18:45). 
+	The lexica contain the most frequent words in the specified corpus.
+	If not corpus is specified, a Dutch wikipedia corpus is used (132MB @ 2015/10/14 18:45). 
 
 Example: python shm_example.py test.wlist 100000 30000
 """
@@ -16,7 +17,7 @@ import logging
 import os
 import urllib
 import sys
-from gensim.corpora import WikiCorpus
+from gensim.corpora import WikiCorpus, TextCorpus
 from scale.shm import *
 from scale import util
 
@@ -41,27 +42,47 @@ if __name__ == '__main__':
 	else:
 		nr_heads = DEFAULT_HEADS_SIZE
 
-	# CORPUS PREPROCESSING
-	prefix = "wiki"
-	f_corpus = prefix + ".bz2" 
-	f_docs = prefix + ".docs"
-
-	# download wikipedia training corpus (132MB @ 2015/10/14 18:45)
-	if os.path.exists(f_docs):
-		wiki = WikiCorpus.load(f_docs)
+	wiki = True
+	if len(sys.argv) > 4:
+		wiki = False
+		f_corpus = sys.argv[4]
+		if os.path.exists(f_corpus):
+			prefix = os.path.basename(f_corpus)
+		else:
+			sys.stderr.write("Specified corpus does not exist: {0}\n".format(f_corpus))
+			sys.exit(1)
 	else:
-		if not os.path.exists(f_corpus):
-			if raw_input("About to download Dutch Wikipedia corpus (132MB @ 2015/10/14 18:45). Do you want to proceed? (y/n) ").startswith("y"):
-				util.download_file("https://dumps.wikimedia.org/nlwiki/latest/nlwiki-latest-pages-articles1.xml.bz2", f_corpus, progress=True)
-			else:
-				sys.exit()
-		wiki = WikiCorpus(f_corpus)
-		wiki.save(f_docs)
+		prefix = "wiki"
+		f_corpus = prefix + ".bz2"
+
+	# SETTINGS
+	f_bow = "{0}.bow".format(prefix)
+
+	# CORPUS PREPROCESSING
+
+	if wiki:
+		if os.path.exists(f_bow):
+			corpus = WikiCorpus.load(f_bow)
+		else:
+			# download wikipedia training corpus (132MB @ 2015/10/14 18:45)
+			if not os.path.exists(f_corpus):
+				if raw_input("About to download Dutch Wikipedia corpus (132MB @ 2015/10/14 18:45). Do you want to proceed? (y/n) ").startswith("y"):
+					util.download_file("https://dumps.wikimedia.org/nlwiki/latest/nlwiki-latest-pages-articles1.xml.bz2", f_corpus, progress=True)
+				else:
+					sys.exit()
+			corpus = WikiCorpus(f_corpus)
+			corpus.save(f_bow)
+	else:
+		if os.path.exists(f_bow):
+			corpus = TextCorpus.load(f_bow)
+		else:
+			corpus = TextCorpus(f_corpus)
+			corpus.save(f_bow)
 
 	# creating modifier and head lexicon
 	heads = set()
 	mods = set()
-	for i, token in enumerate(token for token, tokenid in sorted(wiki.dictionary.token2id.iteritems(), key=lambda x: wiki.dictionary.dfs[x[1]], reverse=True)):
+	for i, token in enumerate(token for token, tokenid in sorted(corpus.dictionary.token2id.iteritems(), key=lambda x: corpus.dictionary.dfs[x[1]], reverse=True)):
 		if i <= nr_heads:
 			heads.add(token)
 		if i <= nr_mods:
