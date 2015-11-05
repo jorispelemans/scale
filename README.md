@@ -10,7 +10,11 @@ The toolkit is open source, includes working examples and can be found on http:/
 
 ## Installation
 
-SCALE depends on [gensim] (https://github.com/piskvorky/gensim/) which is most efficient if you have also installed [Cython] (https://github.com/cython/cython).
+SCALE depends on [gensim] (http://radimrehurek.com/gensim) which is most efficient if you have also installed [Cython] (http://cython.org/). The easiest way to install gensim is:
+```
+pip install -U setuptools
+pip install -U Cython gensim
+```
 
 To install SCALE, run:
 ```

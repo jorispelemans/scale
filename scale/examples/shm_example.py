@@ -18,6 +18,7 @@ import urllib
 import sys
 from gensim.corpora import WikiCorpus
 from scale.shm import *
+from scale import util
 
 DEFAULT_MODS_SIZE = 600000
 DEFAULT_HEADS_SIZE = 200000
@@ -50,8 +51,10 @@ if __name__ == '__main__':
 		wiki = WikiCorpus.load(f_docs)
 	else:
 		if not os.path.exists(f_corpus):
-			logging.info("downloading Wikipedia corpus (132MB @ 2015/10/14 18:45)")
-			urllib.urlretrieve("https://dumps.wikimedia.org/nlwiki/latest/nlwiki-latest-pages-articles1.xml.bz2", f_corpus)
+			if raw_input("About to download Dutch Wikipedia corpus (132MB @ 2015/10/14 18:45). Do you want to proceed? (y/n) ").startswith("y"):
+				util.download_file("https://dumps.wikimedia.org/nlwiki/latest/nlwiki-latest-pages-articles1.xml.bz2", f_corpus, progress=True)
+			else:
+				sys.exit()
 		wiki = WikiCorpus(f_corpus)
 		wiki.save(f_docs)
 
