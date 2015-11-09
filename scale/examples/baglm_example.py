@@ -12,11 +12,11 @@ You can specify your own training corpus in which case each line in the corpus w
 If no training corpus is specified, the models are trained on a Dutch wikipedia corpus (132MB @ 2015/10/14 18:45).
 Time (on Intel i5-2400, using blas and cython) and storage needed for training Wikipedia models with different vocabulary sizes:
 voc	time		storage
-5k	16 mins		101 MB
-10k	17 mins		118 MB	
-25k	17 mins		154 MB
-50k	18 mins		191 MB
-100k	19 mins		252 MB
+5k	16 mins		26  MB
+10k	17 mins		31  MB	
+25k	17 mins		47  MB
+50k	18 mins		73  MB
+100k	19 mins		126 MB
 
 Example: python baglm_example.py test.txt 10000
 """
