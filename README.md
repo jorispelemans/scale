@@ -20,3 +20,5 @@ To install SCALE, run:
 ```
 python setup.py install
 ```
+
+This version has been tested under Python 2.7 only.

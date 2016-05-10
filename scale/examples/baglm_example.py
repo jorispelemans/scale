@@ -23,17 +23,24 @@ Example: python baglm_example.py test.txt 10000
 
 import os
 import logging
+import re
 import sys
 import urllib
+import warnings
 from math import log10
 from gensim.corpora import WikiCorpus, TextCorpus
 from gensim.models import TfidfModel, LsiModel, Word2Vec
 from scale.baglm import models
 from scale import util
 
+warnings.filterwarnings("ignore", category=UserWarning)
+
 DEFAULT_VOC_SIZE = 25000
 
 if __name__ == '__main__':
+	program = os.path.basename(sys.argv[0])
+	wikis = {"nl":("Dutch", "132MB @ 2015/10/14 18:45", "https://dumps.wikimedia.org/nlwiki/latest/nlwiki-latest-pages-articles1.xml.bz2"), \
+		 "en":("English", "size unknown", "https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles1.xml-p000000010p000030302.bz2")}
 	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s')
 	logging.root.setLevel(level=logging.INFO)
 
@@ -58,6 +65,11 @@ if __name__ == '__main__':
 			sys.exit(1)
 	else:
 		prefix = "wiki"
+		lang = "nl"
+		m = re.search("baglm_example_(..).py", program)
+		if m != None:
+			lang = m.group(1)
+		prefix = prefix + "_" + lang
 		f_corpus = prefix + ".bz2"
 
 	# SETTINGS
@@ -79,22 +91,24 @@ if __name__ == '__main__':
 		else:
 			# download wikipedia training corpus (2015/10/14 18:45, 132MB)
 			if not os.path.exists(f_corpus):
-				if raw_input("About to download Dutch Wikipedia corpus (132MB @ 2015/10/14 18:45). Do you want to proceed? (y/n) ").startswith("y"):
-					util.download_file("https://dumps.wikimedia.org/nlwiki/latest/nlwiki-latest-pages-articles1.xml.bz2", f_corpus, progress=True)
+				wiki_lang, wiki_size, wiki_url = wikis[lang]
+				if raw_input("About to download {0} Wikipedia corpus ({1}). Do you want to proceed? (y/n) ".format(wiki_lang, wiki_size)).startswith("y"):
+					util.download_file(wiki_url, f_corpus, progress=True)
 				else:
 					sys.exit()
 			corpus = WikiCorpus(f_corpus)
-			corpus.save(f_bow)
+#			corpus.save(f_bow)
 	else: # models will be trained on your own corpus
 		if os.path.exists(f_bow):
 			corpus = TextCorpus.load(f_bow)
 		else:
 			corpus = TextCorpus(f_corpus)
-			corpus.save(f_bow)
+#			corpus.save(f_bow)
 
 	# filter dictionary
 	corpus.dictionary.filter_extremes(no_below=0, no_above=1, keep_n=voc_size)
 	corpus.dictionary.save(f_dict)
+	corpus.save(f_bow)
 
 	# tf-idf model
 	if os.path.exists(f_tfidf):

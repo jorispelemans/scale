@@ -5,19 +5,20 @@ between the word and the previous words in a semantic space calculated using sin
 """
 
 from collections import deque
-from gensim import corpora, models, similarities
+from gensim import corpora, models, similarities, matutils
 
 class LSA():
 
 	def __init__(self, f, dictfile, tfidf=None, window=175, gamma=11):
 		self.f = f
-		self.history = deque(maxlen=window)
 		self.dictfile = dictfile
-		self.gamma = gamma
 		if tfidf != None:
 			self.tfidf = models.TfidfModel.load(tfidf)
 		self._readLM()
 		self._buildDictionaryIndex()
+		self.window = window
+		self.gamma = gamma
+		self.init_history()
 
 	def _readLM(self):
 		self.dictionary = corpora.Dictionary.load(self.dictfile)
@@ -31,35 +32,52 @@ class LSA():
 			dict_lsa = self.model[self.tfidf[dict_bow()]]
 		else:
 			dict_lsa = self.model[dict_bow()]
-		self.index = similarities.MatrixSimilarity(list(dict_lsa),num_features=self.model.num_topics)
+#		self.index = similarities.MatrixSimilarity(list(dict_lsa),num_features=self.model.num_topics)
+		terms = matutils.Dense2Corpus(self.model.projection.u.T)
+		self.index = similarities.MatrixSimilarity(terms, num_features=self.model.num_topics)
 
-	def init_history(self, history):
-		maxlen = self.history.maxlen
-		self.history = deque(history, maxlen=maxlen)
+	def init_history(self, history=[]):
+		self.history = deque(history, maxlen=self.window)
 
 	def add_to_history(self, word):
 		self.history.append(word)
 
 	def calc_prob(self, word, history=None):
+		probs = self.calc_probs(history)
+		try:
+			i_word = self.dictionary.token2id.keys().index(word)
+			return probs[i_word][1]
+		except ValueError:
+			return 0
+
+	def calc_probs(self, history=None, sort=False):
 		if history != None:
 			self.init_history(history)
 		if len(self.history) == 0:
-			return 0
+			return [(k,0) for k in self.dictionary.token2id]
 		history_bow = self.dictionary.doc2bow(self.history)
 		if self.tfidf != None:
 			history_lsa = self.model[self.tfidf[history_bow]]
 		else:
 			history_lsa = self.model[history_bow]
 		sims = self.index[history_lsa]
-
 		try:
-			i_word = self.dictionary.token2id.keys().index(word)
-		except ValueError:
-			return 0
-		return self.cos_to_prob(sims, i_word)
+			probs = self.cos_to_probs(sims)
+		except FloatingPointError:
+			return [(k,0) for k in self.dictionary.token2id]
+		if sort:
+			return sorted(enumerate(probs), key=lambda item: -item[1])
+		else:
+			return list(enumerate(probs))
 
-	def cos_to_prob(self, cos, index):
+	def cos_to_probs(self, cos):
 		cos_min = min(cos)
 		cos_shifted = (cos - cos_min)**self.gamma
 		sum_cos_shifted = sum(cos_shifted)
-		return cos_shifted[index] / sum_cos_shifted
+		if sum_cos_shifted == 0:
+			raise FloatingPointError('Division by zero')
+		return cos_shifted / sum_cos_shifted
+
+	def __repr__(self):
+		return "LSA(window=%s, gamma=%s)" % \
+			(self.window, self.gamma)

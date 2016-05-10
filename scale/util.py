@@ -13,5 +13,6 @@ def download_file(url, fname, progress=False):
 			sys.stdout.write("\r{0} ... {1}%".format(msg, percent))
 			sys.stdout.flush()
 		urllib.urlretrieve(url, fname, dl_progress)
+		print
 
 		msg = None

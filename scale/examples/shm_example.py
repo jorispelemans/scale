@@ -8,7 +8,7 @@ USAGE: shm_example.py WLIST [MODIFIER_LEXICON_SIZE] [HEAD_LEXICON_SIZE] [CORPUS]
 	2) Selection: find best hypothesis based on a maximum head length criterion
 
 	The lexica contain the most frequent words in the specified corpus.
-	If not corpus is specified, a Dutch wikipedia corpus is used (132MB @ 2015/10/14 18:45). 
+	If no corpus is specified, a Dutch wikipedia corpus is used (132MB @ 2015/10/14 18:45). 
 
 Example: python shm_example.py test.wlist 100000 30000
 """
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 			sys.stderr.write("Specified corpus does not exist: {0}\n".format(f_corpus))
 			sys.exit(1)
 	else:
-		prefix = "wiki"
+		prefix = "wiki_nl"
 		f_corpus = prefix + ".bz2"
 
 	# SETTINGS
@@ -98,15 +98,15 @@ if __name__ == '__main__':
 		d = g.decompound(w)
 		if len(d) != 0:
 			generated_hypotheses[w] = d
-	logging.info('{0}/{1} possible compound(s) found'.format(len(generated_hypotheses), cnt))
+	logging.info("{0}/{1} words classified as compound".format(len(generated_hypotheses), cnt))
 
 	logging.info("Selecting best semantic head hypothesis")
 	s = Selector()
 	s.add_criterion(MaxHeadLengthCriterion(1.0))
 	for w in generated_hypotheses:
-		logging.info('Selection for word {0}:'.format(w))
+		print "Selection for word {0}:".format(w)
 		d = generated_hypotheses[w]
 		for i, h in enumerate(d):
-			logging.info('\t{0:2}) {1:40} score = {2}'.format(i+1, h, s.score(w, h)))
+			print "\t{0:2}) {1:40} score = {2}".format(i+1, h, s.score(w, h))
 		best, score = s.select_best_hypothesis(w, d)
-		logging.info('\t==> Semantic head = {0}'.format(best[-1]))
+		print "\t==> Semantic head = {0}".format(best[-1])

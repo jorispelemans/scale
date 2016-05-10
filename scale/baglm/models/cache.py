@@ -12,14 +12,17 @@ class Cache():
 	(NO_DECAY, LIN_DECAY, EXP_DECAY) = ('no', 'lin', 'exp')
 
 	def __init__(self, window=400, decay=EXP_DECAY, alpha=0.99):
-		self.history = deque(maxlen=window)
+#		self.history = deque(maxlen=window)
+		self.window = window
 		self.decay = decay
 		self.alpha = alpha
 		self.cache = defaultdict(float)
+		self.init_history()
 
-	def init_history(self, history):
-		maxlen = self.history.maxlen
-		self.history = deque(history, maxlen=maxlen)
+	def init_history(self, history=[]):
+#		maxlen = self.history.maxlen
+#		self.history = deque(history, maxlen=maxlen)
+		self.history = deque(history, maxlen=self.window)
 		self._update()
 
 	def add_to_history(self, word):
@@ -55,3 +58,7 @@ class Cache():
 			return self.cache[word]
 		except(KeyError):
 			return 0
+
+	def __repr__(self):
+		return "Cache(window=%s, decay=%s, alpha=%s)" % \
+			(self. window, self.decay, self.alpha)
