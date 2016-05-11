@@ -18,7 +18,7 @@ voc	time		storage
 50k	18 mins		73  MB
 100k	19 mins		126 MB
 
-Example: python baglm_example.py test.txt 10000
+Example: python baglm_example.py test_nl.txt 10000
 """
 
 import os
@@ -34,13 +34,14 @@ from scale.baglm import models
 from scale import util
 
 warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 DEFAULT_VOC_SIZE = 25000
 
 if __name__ == '__main__':
 	program = os.path.basename(sys.argv[0])
 	wikis = {"nl":("Dutch", "132MB @ 2015/10/14 18:45", "https://dumps.wikimedia.org/nlwiki/latest/nlwiki-latest-pages-articles1.xml.bz2"), \
-		 "en":("English", "size unknown", "https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles1.xml-p000000010p000030302.bz2")}
+		 "en":("English", "150MB @ 2016/05/11 09:53", "https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles1.xml-p000000010p000030302.bz2")}
 	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s')
 	logging.root.setLevel(level=logging.INFO)
 

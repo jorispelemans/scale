@@ -7,7 +7,7 @@ between the word and the previous words in a semantic space calculated using the
 """
 
 from collections import deque
-from numpy import array, dot, float32 as REAL
+from numpy import array, dot, exp, float32 as REAL, log
 from gensim import corpora, models, matutils
 from gensim.models import word2vec
 
@@ -78,6 +78,7 @@ class Word2Vec():
 		mean = matutils.unitvec(array(mean).mean(axis=0)).astype(REAL)
 		sims = dot(self.model.syn0norm, mean)
 		probs = self.cos_to_probs(sims)
+		assert abs(1 - sum(probs)) < 1e-7
 		if sort:
 			return sorted(enumerate(probs), key=lambda item: -item[1])
 		else:
@@ -85,13 +86,15 @@ class Word2Vec():
 
 	def cos_to_prob(self, cos, index):
 		cos_min = min(cos)
-		cos_shifted = (cos - cos_min)**self.gamma
+#		cos_shifted = (cos - cos_min)**self.gamma
+		cos_shifted = exp(log(cos - cos_min) * log(self.gamma))
 		sum_cos_shifted = sum(cos_shifted)
 		return cos_shifted[index] / sum_cos_shifted
 
 	def cos_to_probs(self, cos):
 		cos_min = min(cos)
-		cos_shifted = (cos - cos_min)**self.gamma
+#		cos_shifted = (cos - cos_min)**self.gamma
+		cos_shifted = exp(log(cos - cos_min) * log(self.gamma))
 		sum_cos_shifted = sum(cos_shifted)
 		return cos_shifted / sum_cos_shifted
 

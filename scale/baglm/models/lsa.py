@@ -6,6 +6,7 @@ between the word and the previous words in a semantic space calculated using sin
 
 from collections import deque
 from gensim import corpora, models, similarities, matutils
+from numpy import log, exp
 
 class LSA():
 
@@ -65,6 +66,7 @@ class LSA():
 			probs = self.cos_to_probs(sims)
 		except FloatingPointError:
 			return [(k,0) for k in self.dictionary.token2id]
+		assert abs(1 - sum(probs)) < 1e-7
 		if sort:
 			return sorted(enumerate(probs), key=lambda item: -item[1])
 		else:
@@ -72,7 +74,8 @@ class LSA():
 
 	def cos_to_probs(self, cos):
 		cos_min = min(cos)
-		cos_shifted = (cos - cos_min)**self.gamma
+		#cos_shifted = (cos - cos_min)**self.gamma
+		cos_shifted = exp(log(cos - cos_min) * log(self.gamma))
 		sum_cos_shifted = sum(cos_shifted)
 		if sum_cos_shifted == 0:
 			raise FloatingPointError('Division by zero')
